@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Registro de Cuenca</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>Registro de Cuenca</h2>
+      <form>
+        <div class="form-group">
+          <label for="fecha-hora">Fecha y Hora:</label>
+          <input type="datetime-local" class="form-control" id="fecha-hora" required>
+        </div>
+        <div class="form-group">
+          <label for="cuenca">Cuenca:</label>
+          <select class="form-control" id="cuenca" required>
+            <option value="Cuenca Oriental">Cuenca Oriental</option>
+            <option value="Cuenca Maracaibo-Falcón">Cuenca Maracaibo-Falcón</option>
+            <option value="Cuenca Barinas-Apure">Cuenca Barinas-Apure</option>
+            <option value="Tuy-Cariaco">Tuy-Cariaco</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="valor-psi">Valor (psi):</label>
+          <input type="number" class="form-control" id="valor-psi" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </form>
+      <hr>
+      <h3>Registros</h3>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Cuenca</th>
+            <th>Valor (psi)</th>
+          </tr>
+        </thead>
+        <tbody id="registros"></tbody>
+      </table>
+    </div>
+    <div>
+      <canvas id="chart"></canvas>
+    </div>
+    <button onclick="mostrarGrafica()">Mostrar Gráfica</button>
+
+    
+    <script>
+      const registros = [];
+      const form = document.querySelector('form');
+      const registrosTable = document.querySelector('#registros');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const fechaHora = document.querySelector('#fecha-hora').value;
+        const cuenca = document.querySelector('#cuenca').value;
+        const valorPsi = document.querySelector('#valor-psi').value;
+        console.log(fechaHora, cuenca, valorPsi);
+        registros.push({ fechaHora: new Date(fechaHora), cuenca, valorPsi });
+        mostrarRegistros();
+      });
+
+      function mostrarRegistros() {
+        registros.sort((a, b) => b.fechaHora - a.fechaHora);
+        registrosTable.innerHTML = '';
+        registros.forEach((registro) => {
+          const row = document.createElement('tr');
+          const fechaHoraCell = document.createElement('td');
+          fechaHoraCell.innerText = registro.fechaHora.toLocaleString();
+          const cuencaCell = document.createElement('td');
+          cuencaCell.innerText = registro.cuenca;
+          const valorPsiCell = document.createElement('td');
+          valorPsiCell.innerText = registro.valorPsi;
+          row.appendChild(fechaHoraCell);
+          row.appendChild(cuencaCell);
+          row.appendChild(valorPsiCell);
+          registrosTable.appendChild(row);
+        });
+      }
+
+            function crearDatasets(registros) {
+        // Crear un objeto para almacenar los valores de psi por cuenca
+        const valoresPorCuenca = {
+          "Cuenca Oriental": [],
+          "Cuenca Maracaibo-Falcón": [],
+          "Cuenca Barinas-Apure": [],
+          "Tuy-Cariaco": [],
+        };
+
+        // Recorrer los registros para extraer los valores de psi por cuenca y fecha
+        registros.forEach((registro) => {
+          const valorPsi = registro.valorPsi;
+          const cuenca = registro.cuenca;
+          const fecha = registro.fecha;
+
+          // Agregar el valor de psi a la cuenca correspondiente
+          valoresPorCuenca[cuenca].push({
+            x: fecha,
+            y: valorPsi,
+          });
+        });
+
+        // Crear los datasets con los valores por cuenca
+        const datasets = [];
+
+        for (const cuenca in valoresPorCuenca) {
+          datasets.push({
+            label: cuenca,
+            data: valoresPorCuenca[cuenca],
+          });
+        }
+
+        return datasets;
+      }
+      // Obtener los registros ordenados por fecha y hora
+const registrosOrdenados = obtenerRegistrosOrdenadosPorFechaYHora(registros);
+
+// Crear los datasets para la gráfica
+const datasets = crearDatasets(registrosOrdenados);
+
+// Crear la configuración de la gráfica
+const config = {
+  type: "line",
+  data: {
+    datasets: datasets,
+  },
+  options: {
+    responsive: true,
+    scales: {
+      xAxes: [
+        {
+          type: "time",
+          time: {
+            unit: "day",
+          },
+        },
+      ],
+      yAxes: [
+        {
+          scaleLabel: {
+            display: true,
+            labelString: "Valor en psi",
+          },
+        },
+      ],
+    },
+  },
+};
+
+// Crear la gráfica
+const chartElement = document.getElementById("chart");
+const chart = new Chart(chartElement, config);
+function mostrarGrafica() {
+  // Obtener los datos para la gráfica
+  var labels = [];
+  var data = [];
+  for (var i = 0; i < registros.length; i++) {
+    labels.push(registros[i].fecha);
+    data.push(registros[i].valor);
+  }
+
+  // Crear la gráfica usando Chart.js
+  var ctx = document.getElementById('chart').getContext('2d');
+  var miGrafica = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Valores en psi',
+        data: data,
+        borderColor: 'blue',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+}
+
+    </script>
+
+  </body>  
