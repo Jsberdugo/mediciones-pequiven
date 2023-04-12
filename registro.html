@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Pozos petroleros</title>
+    
+
+</head>
+<body>
+  <fieldset>
+    <div class="container">
+      <div class="row">
+
+        <img align=left src="pequiven.png" style="height: 75px; width: 350;"alt="">
+    <br>
+    <div class="barra">
+        
+        <nav>
+          <a href="registro.html">Registro</a>
+          <a href="pozos.html">Pozos</a>
+            <a href="index.html">Inicio</a>
+  
+        </nav>
+    </div>
+        </div>
+
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Registro de Pozos en Cuenca</title>
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          </head>
+          <body>
+            <div class="container mt-5">
+              <h2>Registro de Pozos en Cuenca</h2>
+              <form>
+                <div class="form-group">
+                  <label for="fecha-hora">Fecha y Hora:</label>
+                  <input type="datetime-local" class="form-control" id="fecha-hora" required>
+                </div>
+                <div class="form-group">
+                  <label for="cuenca">Cuenca:</label>
+                  <select class="form-control" id="cuenca" required>
+                    <option value="Cuenca Oriental">Cuenca Oriental</option>
+                    <option value="Cuenca Maracaibo-Falcón">Cuenca Maracaibo-Falcón</option>
+                    <option value="Cuenca Barinas-Apure">Cuenca Barinas-Apure</option>
+                    <option value="Tuy-Cariaco">Tuy-Cariaco</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="valor-psi">Valor (psi):</label>
+                  <input type="number" class="form-control" id="valor-psi" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+              </form>
+              <hr>
+              <h3>Registros</h3>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Fecha y Hora</th>
+                    <th>Cuenca</th>
+                    <th>Valor (psi)</th>
+                  </tr>
+                </thead>
+                <tbody id="registros"></tbody>
+              </table>
+            </div>
+            <button class="btn btn-primary" id="btn-grafica">Mostrar gráfica</button>
+        
+            <script>
+              const registros = [];
+              const form = document.querySelector('form');
+              const registrosTable = document.querySelector('#registros');
+        
+              form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const fechaHora = document.querySelector('#fecha-hora').value;
+                const cuenca = document.querySelector('#cuenca').value;
+                const valorPsi = document.querySelector('#valor-psi').value;
+                console.log(fechaHora, cuenca, valorPsi);
+                registros.push({ fechaHora: new Date(fechaHora), cuenca, valorPsi });
+                mostrarRegistros();
+              });
+        
+              function mostrarRegistros() {
+                registros.sort((a, b) => b.fechaHora - a.fechaHora);
+                registrosTable.innerHTML = '';
+                registros.forEach((registro) => {
+                  const row = document.createElement('tr');
+                  const fechaHoraCell = document.createElement('td');
+                  fechaHoraCell.innerText = registro.fechaHora.toLocaleString();
+                  const cuencaCell = document.createElement('td');
+                  cuencaCell.innerText = registro.cuenca;
+                  const valorPsiCell = document.createElement('td');
+                  valorPsiCell.innerText = registro.valorPsi;
+                  row.appendChild(fechaHoraCell);
+                  row.appendChild(cuencaCell);
+                  row.appendChild(valorPsiCell);
+                  registrosTable.appendChild(row);
+                });
+              }
+        
+              const btnGrafica = document.querySelector('#btn-grafica');
+        btnGrafica.addEventListener('click', mostrarGrafica);
+        
+        function mostrarGrafica() {
+          const cuencas = registros.reduce((acumulador, registro) => {
+            if (!acumulador.includes(registro.cuenca)) {
+              acumulador.push(registro.cuenca);
+            }
+            return acumulador;
+          }, []);
+        
+          const datos = cuencas.map((cuenca) => {
+            const mediciones = registros.filter((registro) => registro.cuenca === cuenca);
+            return {
+              label: cuenca,
+              data: mediciones.map((registro) => {
+                return {
+                  x: registro.fechaHora.getTime(),
+                  y: registro.valorPsi,
+                };
+              }),
+              borderColor: randomColor(),
+              borderWidth: 2,
+              fill: false,
+            };
+          });
+        
+          const grafica = document.createElement('canvas');
+          grafica.id = 'grafica';
+          grafica.width = 600;
+          grafica.height = 400;
+          document.body.appendChild(grafica);
+        
+          new Chart(grafica, {
+            type: 'line',
+            data: {
+              datasets: datos,
+            },
+            options: {
+              title: {
+                display: true,
+                text: 'Comparación de mediciones de cada cuenca',
+              },
+              scales: {
+                xAxes: [{
+                  type: 'time',
+                  time: {
+                    unit: 'day',
+                  },
+                  scaleLabel: {
+                    display: true,
+                    labelString: 'Fecha',
+                  },
+                }],
+                yAxes: [{
+                  scaleLabel: {
+                    display: true,
+                    labelString: 'Valor (psi)',
+                  },
+                }],
+              },
+            },
+          });
+        }
+        
+        function randomColor() {
+          const r = Math.floor(Math.random() * 256);
+          const g = Math.floor(Math.random() * 256);
+          const b = Math.floor(Math.random() * 256);
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+        
+            </script>
+        
+          </body>  
+        
+    
+  </div>
+	</div>
+  <style>
+    body {
+        background-image: url("fondo.png")
+    }
+    a {
+        color: red;
+    }
+    a:hover{
+        color: rgb(255, 0, 0);
+        background-color: rgb(0, 0, 0);
+    }
+    p {
+        text-align: justify;
+        font-size: larger;
+    }
+   
+</style>
+</body>
+</html>
